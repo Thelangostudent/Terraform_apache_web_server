@@ -175,7 +175,7 @@ resource "azurerm_linux_virtual_machine" "myterraVM" {
         environment = "Terraform Web Apache"
     }
 
-    provisioner "remote-excec" {
+    provisioner "remote-exec" {
         inline = [
         
         "sudo yum -y install httpd && sudo systemctl httpd",
@@ -187,7 +187,7 @@ resource "azurerm_linux_virtual_machine" "myterraVM" {
 
         connection {
           type = "ssh"
-          host = azurerm_public_ip.myterraformpublicip
+          host = azurerm_public_ip.myterraformpublicip.ip_address
           user = "azureuser"
           private_key = ("~/.ssh/id_rsa")
         }
