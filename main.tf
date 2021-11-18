@@ -47,6 +47,7 @@ resource "azurerm_public_ip" "myterraformpublicip" {
     location                     = "eastus"
     resource_group_name          = azurerm_resource_group.myterraformgroup.name
     allocation_method            = "Dynamic"
+    domain_name_label = "apachevmtf"
 
     tags = {
         environment = "Terraform Web Apache"
@@ -74,6 +75,18 @@ resource "azurerm_network_security_group" "myterraformnsg" {
     tags = {
         environment = "Terraform Web Apache"
     }
+
+     security_rule {
+    name                       = "HTTP"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 }
 
 # Create network interface
@@ -165,7 +178,10 @@ resource "azurerm_linux_virtual_machine" "myterraVM" {
     admin_ssh_key {
         username       = "azureuser"
         public_key     = tls_private_key.example_ssh.public_key_openssh
+        
     }
+
+
 
     boot_diagnostics {
         storage_account_uri = azurerm_storage_account.mystorageaccount.primary_blob_endpoint
@@ -175,21 +191,22 @@ resource "azurerm_linux_virtual_machine" "myterraVM" {
         environment = "Terraform Web Apache"
     }
 
+    # Set up apache web server and host some text, todo-app coming later
     provisioner "remote-exec" {
         inline = [
         
-        "sudo yum -y install httpd && sudo systemctl httpd",
-        "echo '<h1> this is a test setup of the Apache server using Terraform provisioner</h1>'>index.html",
-        "sudo mv index.html /var/www/html/"
+        "sudo apt-get update && sudo apt -y install apache2",
+        " echo '<!doctype html><html><body><h1>If you see this, then It finally worked!</h1></body></html>'", 
+       "| sudo tee /var/www/html/index.html"
 
 
         ]
 
         connection {
           type = "ssh"
-          host = azurerm_public_ip.myterraformpublicip.ip_address
+          host = azurerm_public_ip.myterraformpublicip.fqdn
           user = "azureuser"
-          private_key = ("~/.ssh/id_rsa")
+          private_key = tls_private_key.example_ssh.private_key_pem
         }
         
             
