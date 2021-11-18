@@ -174,6 +174,28 @@ resource "azurerm_linux_virtual_machine" "myterraVM" {
     tags = {
         environment = "Terraform Web Apache"
     }
+
+    provisioner "remote-excec" {
+        inline = [
+        
+        "sudo yum -y install httpd && sudo systemctl httpd",
+        "echo '<h1> this is a test setup of the Apache server using Terraform provisioner</h1>'>index.html",
+        "sudo mv index.html /var/www/html/"
+
+
+        ]
+
+        connection {
+          type = "ssh"
+          host = azurerm_public_ip.myterraformpublicip
+          user = "azureuser"
+          private_key = ("~/.ssh/id_rsa")
+        }
+        
+            
+        
+    
+    }
 }
 
 
